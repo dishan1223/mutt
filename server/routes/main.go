@@ -12,9 +12,7 @@ func Init(a *fiber.App) {
 
 	v1 := app.Group("/api/v1")
 
-	app.Get("/test", handler.Test)
+	app.Get("/ping", handler.Ping)
 
-	v1.Get("/", func(c fiber.Ctx) error {
-		return c.SendString("Hello, World!")
-	})
+	v1.Get("/ping", handler.Ping)
 }

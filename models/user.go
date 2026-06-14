@@ -17,6 +17,14 @@ type User struct {
 	ProjectID pq.Int64Array `json:"project_id" gorm:"type:integer[];default:'{}'"`
 }
 
+type SignupRequest struct {
+	Username string `json:"username" validate:"required,max=70"`
+	Email    string `json:"email" validate:"required,email,max=255"`
+	Password string `json:"password" validate:"required,min=8"`
+	Phone    string `json:"phone" validate:"required,max=20"`
+	Plan     string `json:"plan,omitempty" validate:"omitempty,oneof=Free Pro Enterprise"`
+}
+
 type Project struct {
 	gorm.Model
 	ProjectName string
