@@ -51,8 +51,3 @@ func (u *User) ToResponse() UserResponse {
 		Plan:     u.Plan,
 	}
 }
-
-type Project struct {
-	gorm.Model
-	ProjectName string
-}
