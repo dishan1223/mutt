@@ -40,6 +40,8 @@ func Init(a *fiber.App) {
 	errors.Patch("/:errorGroupId", handler.UpdateErrorGroupHandler)
 	errors.Delete("/:errorGroupId", handler.DeleteErrorGroupHandler)
 
+	// Rate limiter provided by GoFiber.
+	// Docs: https://docs.gofiber.io/blog/fiber-v3-rate-limiting-guide
 	ingestRateLimit := limiter.New(limiter.Config{
 		Max:        100,
 		Expiration: 1 * time.Minute,
@@ -55,5 +57,6 @@ func Init(a *fiber.App) {
 		},
 	})
 
+	// Ingest endpoint is for the SDKs to send error logs.
 	v1.Post("/ingest", middleware.APIKeyAuth, ingestRateLimit, handler.IngestErrorHandler)
 }

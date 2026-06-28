@@ -198,6 +198,7 @@ func RotateAPIKeyHandler(c fiber.Ctx) error {
 		})
 	}
 
+	// rawKey is only shown once to the user.
 	rawKey, hashedKey := service.GenerateAPIKey()
 	if rawKey == "" {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
