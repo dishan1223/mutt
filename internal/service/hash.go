@@ -1,12 +1,19 @@
 package service
 
 import (
+	"strconv"
+
 	"github.com/dishan1223/mutt/consts"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func HashPassword(p string) (string, error) {
-	hp, err := bcrypt.GenerateFromPassword([]byte(p), consts.HASH_COST)
+	HashCost, err := strconv.Atoi(consts.HASH_COST)
+	if err != nil {
+		return "", err
+	}
+
+	hp, err := bcrypt.GenerateFromPassword([]byte(p), HashCost)
 	if err != nil {
 		return "", err
 	}

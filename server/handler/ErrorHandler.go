@@ -4,7 +4,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dishan1223/mutt/consts"
 	"github.com/dishan1223/mutt/internal/config"
 	"github.com/dishan1223/mutt/internal/service"
 	"github.com/dishan1223/mutt/internal/utils"
@@ -30,11 +29,15 @@ func IngestErrorHandler(c fiber.Ctx) error {
 		})
 	}
 
-	if len(body.Log) > consts.MAX_LOG_SIZE {
-		body.Log = body.Log[:consts.MAX_LOG_SIZE]
-	}
-	if len(body.StackTrace) > consts.MAX_STACK_TRACE {
-		body.StackTrace = body.StackTrace[:consts.MAX_STACK_TRACE]
+	// The `ClampIngestRequestFields` function takes an `IngestRequest` object as input and ensures
+	// that the lengths of the `Log` and `StackTrace` fields do not exceed predefined maximum sizes.
+	// It retrieves these maximum sizes from environment variables, converts them to integers, and truncates
+	// the fields if they exceed the limits.
+	// If any error occurs during this process (e.g., invalid size values), it returns an error.
+	if err := utils.ClampIngestRequestFields(body); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Server configuration error",
+		})
 	}
 
 	if body.Severity == "" {

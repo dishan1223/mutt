@@ -6,4 +6,4 @@ func GetPort() string {
 	return ":" + config.MustGetEnv("PORT")
 }
 
-const HASH_COST = 10
+var HASH_COST = config.MustGetEnv("HASH_COST")
