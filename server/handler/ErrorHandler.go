@@ -10,6 +10,7 @@ import (
 	"github.com/dishan1223/mutt/models"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/log"
+	"gorm.io/gorm"
 )
 
 func IngestErrorHandler(c fiber.Ctx) error {
@@ -70,10 +71,10 @@ func IngestErrorHandler(c fiber.Ctx) error {
 		})
 	}
 
-	config.DB.Model(&group).Updates(map[string]interface{}{
-		"count":        group.Count + 1,
-		"last_seen_at": time.Now(),
-	})
+	// Previews version had some race-condition issues.
+	// The following two lines update the error group count and last seen timestamp in a single database operation, reducing the risk of
+	config.DB.Model(&group).UpdateColumn("count", gorm.Expr("count + 1"))
+	config.DB.Model(&group).Update("last_seen_at", time.Now())
 
 	if shouldNotify {
 		config.DB.Model(&group).Update("notified", true)

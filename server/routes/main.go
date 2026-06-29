@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/dishan1223/mutt/internal/middleware"
@@ -17,6 +18,7 @@ func Init(a *fiber.App) {
 	app = a
 
 	app.Use(fiberotel.Middleware())
+	app.Use(middleware.SecurityHeaders)
 
 	v1 := app.Group("/api/v1")
 
@@ -51,7 +53,7 @@ func Init(a *fiber.App) {
 		Expiration: 1 * time.Minute,
 		KeyGenerator: func(c fiber.Ctx) string {
 			projectID, _ := c.Locals("projectID").(uint)
-			return "ingest:" + string(rune(projectID))
+			return "ingest:" + strconv.FormatUint(uint64(projectID), 10)
 		},
 		LimitReached: func(c fiber.Ctx) error {
 			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{

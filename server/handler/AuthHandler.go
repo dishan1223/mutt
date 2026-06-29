@@ -214,8 +214,7 @@ func sendTokenPair(c fiber.Ctx, userID uint) error {
 	})
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":      "Success",
-		"access_token": accessToken,
+		"message": "Success",
 	})
 }
 

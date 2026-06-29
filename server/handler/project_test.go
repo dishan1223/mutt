@@ -34,9 +34,13 @@ func loginProjectUser(t *testing.T, app *fiber.App, email string) string {
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ := app.Test(req)
 
-	var result map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&result)
-	return result["access_token"].(string)
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name == "access_token" {
+			return cookie.Value
+		}
+	}
+	t.Fatal("access_token cookie not found")
+	return ""
 }
 
 func createProject(t *testing.T, app *fiber.App, token, name string) map[string]interface{} {

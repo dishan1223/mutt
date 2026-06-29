@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"strconv"
 	"time"
 
 	"github.com/dishan1223/mutt/internal/config"
@@ -30,11 +31,11 @@ func GetRefreshTokenUserID(token string) (uint, error) {
 		return 0, err
 	}
 
-	var userID uint
-	for _, c := range val {
-		userID = userID*10 + uint(c-'0')
+	id, err := strconv.ParseUint(val, 10, 64)
+	if err != nil {
+		return 0, err
 	}
-	return userID, nil
+	return uint(id), nil
 }
 
 func DeleteRefreshToken(token string) error {

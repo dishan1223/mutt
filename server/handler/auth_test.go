@@ -30,9 +30,13 @@ func loginAndGetToken(t *testing.T, app *fiber.App, email string) string {
 	req.Header.Set("Content-Type", "application/json")
 	resp, _ := app.Test(req)
 
-	var result map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&result)
-	return result["access_token"].(string)
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name == "access_token" {
+			return cookie.Value
+		}
+	}
+	t.Fatal("access_token cookie not found")
+	return ""
 }
 
 func TestSignUp_Success(t *testing.T) {
@@ -63,9 +67,6 @@ func TestSignUp_Success(t *testing.T) {
 	json.NewDecoder(resp.Body).Decode(&result)
 	if result["message"] != "Success" {
 		t.Fatalf("expected success message, got %v", result["message"])
-	}
-	if result["access_token"] == nil || result["access_token"] == "" {
-		t.Fatal("expected access_token in response")
 	}
 }
 
@@ -145,8 +146,8 @@ func TestLogin_Success(t *testing.T) {
 
 	var result map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&result)
-	if result["access_token"] == nil || result["access_token"] == "" {
-		t.Fatal("expected access_token in response")
+	if result["message"] != "Success" {
+		t.Fatalf("expected success message, got %v", result["message"])
 	}
 }
 
