@@ -77,6 +77,8 @@ func Init(a *fiber.App) {
 		},
 	})
 
+	// Backup endpoints for exporting and importing backup data.
+	// This endpoint currently exports/imports JSON data.
 	v1.Get("/backup", middleware.AuthRequired, backupExportRateLimit, handler.ExportBackupHandler)
 	v1.Post("/backup/import", middleware.AuthRequired, backupImportRateLimit, handler.ImportBackupHandler)
 

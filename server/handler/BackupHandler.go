@@ -7,21 +7,18 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"time"
 
+	"github.com/dishan1223/mutt/consts"
 	"github.com/dishan1223/mutt/internal/config"
+	"github.com/dishan1223/mutt/internal/utils"
 	"github.com/dishan1223/mutt/models"
 	"github.com/gofiber/fiber/v3"
 )
 
-// ponytail: 10KB threshold, compress everything above this
-const gzipThreshold = 10 << 10
-
-// ponytail: 5MB import limit
-const maxImportSize = 5 << 20
-
-// ponytail: 100k records cap to prevent accidental mega-imports
-const maxImportRecords = 100000
+// Check consts/backup.go for the constants used in this file
+const gzipThreshold = consts.GzipThreshold
+const maxImportSize = consts.MaxImportSize
+const maxImportRecords = consts.MaxImportRecords
 
 func ExportBackupHandler(c fiber.Ctx) error {
 	userId := c.Locals("userID").(uint)
@@ -33,45 +30,12 @@ func ExportBackupHandler(c fiber.Ctx) error {
 		})
 	}
 
-	backup := models.BackupData{
-		ExportedAt: time.Now(),
-		Projects:   make([]models.BackupProject, 0, len(projects)),
-	}
-
-	for _, p := range projects {
-		var groups []models.ErrorGroup
-		config.DB.Where("project_id = ?", p.ID).Find(&groups)
-
-		bp := models.BackupProject{
-			Name:        p.Name,
-			ErrorGroups: make([]models.BackupErrorGroup, 0, len(groups)),
-		}
-
-		for _, g := range groups {
-			var errs []models.Error
-			config.DB.Where("error_group_id = ?", g.ID).Find(&errs)
-
-			bg := models.BackupErrorGroup{
-				Title:       g.Title,
-				Status:      g.Status,
-				Fingerprint: g.Fingerprint,
-				Count:       g.Count,
-				LastSeenAt:  g.LastSeenAt,
-				Errors:      make([]models.BackupError, 0, len(errs)),
-			}
-
-			for _, e := range errs {
-				bg.Errors = append(bg.Errors, models.BackupError{
-					Log:        e.Log,
-					StackTrace: e.StackTrace,
-					Severity:   e.Severity,
-					OccurredAt: e.OccurredAt,
-				})
-			}
-
-			bp.ErrorGroups = append(bp.ErrorGroups, bg)
-		}
-		backup.Projects = append(backup.Projects, bp)
+	// Check the utils/GenerateBackupModel.go file for the GenerateBackupModel function
+	backup, err := utils.GenerateBackupModel(projects)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to generate backup",
+		})
 	}
 
 	data, err := json.Marshal(backup)
