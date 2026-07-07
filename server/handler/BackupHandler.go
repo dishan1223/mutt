@@ -59,6 +59,7 @@ func ExportBackupHandler(c fiber.Ctx) error {
 				"error": "Failed to compress backup data",
 			})
 		}
+
 		return c.SendStream(bytes.NewReader(buffer.Bytes()))
 	}
 
