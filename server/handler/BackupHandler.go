@@ -48,20 +48,18 @@ func ExportBackupHandler(c fiber.Ctx) error {
 	c.Set("Content-Type", "application/json")
 
 	// Stream gzip for large payloads, send small ones directly
+	// The type of data is []byte, so we can use bytes.Buffer to write the compressed data to a buffer and then send it as a stream
 	if len(data) > gzipThreshold {
 		c.Set("Content-Encoding", "gzip")
 		c.Set("Content-Disposition", "attachment; filename=Mutt_Backup.json.gz")
 
-		var buf bytes.Buffer
-		gz := gzip.NewWriter(&buf)
-		if _, err := gz.Write(data); err != nil {
-			gz.Close()
+		buffer, err := utils.CompressLargeBackupData(data)
+		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to compress backup",
+				"error": "Failed to compress backup data",
 			})
 		}
-		gz.Close()
-		return c.SendStream(bytes.NewReader(buf.Bytes()))
+		return c.SendStream(bytes.NewReader(buffer.Bytes()))
 	}
 
 	c.Set("Content-Disposition", "attachment; filename=Mutt_Backup.json")
