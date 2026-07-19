@@ -61,8 +61,22 @@ func CreateProjectHandler(c fiber.Ctx) error {
 func ListProjectsHandler(c fiber.Ctx) error {
 	userID := c.Locals("userID").(uint)
 
+	page, limit := models.ParsePagination(c.Query("page"), c.Query("limit"))
+	offset := (page - 1) * limit
+
+	query := config.DB.Where("user_id = ?", userID)
+	if q := c.Query("q"); q != "" {
+		if len(q) > 100 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Search query too long (max 100 characters)"})
+		}
+		query = query.Where("name ILIKE ?", "%"+q+"%")
+	}
+
+	var totalCount int64
+	query.Model(&models.Project{}).Count(&totalCount)
+
 	var projects []models.Project
-	if err := config.DB.Where("user_id = ?", userID).Order("created_at DESC").Find(&projects).Error; err != nil {
+	if err := query.Order("created_at DESC").Offset(offset).Limit(limit).Find(&projects).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to fetch projects",
 		})
@@ -73,8 +87,9 @@ func ListProjectsHandler(c fiber.Ctx) error {
 		responses[i] = p.ToResponse()
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"projects": responses,
+	return c.Status(fiber.StatusOK).JSON(models.PaginatedProjects{
+		Projects:   responses,
+		Pagination: models.NewPagination(page, limit, totalCount),
 	})
 }
 

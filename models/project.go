@@ -21,8 +21,8 @@ type Project struct {
 // Error groups similar errors together (fingerprint-based)
 type ErrorGroup struct {
 	gorm.Model
-	ProjectID   uint      `json:"project_id" gorm:"not null;index"`
-	Fingerprint string    `json:"fingerprint" gorm:"not null;index;type:varchar(64)"` // SHA-256 of stack trace
+	ProjectID   uint      `json:"project_id" gorm:"not null;uniqueIndex:idx_project_fingerprint"`
+	Fingerprint string    `json:"fingerprint" gorm:"not null;uniqueIndex:idx_project_fingerprint;type:varchar(64)"`
 	Title       string    `json:"title" gorm:"not null;type:varchar(500)"`
 	Status      string    `json:"status" gorm:"not null;type:varchar(20);default:'critical'"` // critical|resolved|recovered
 	Count       int       `json:"count" gorm:"default:1"`

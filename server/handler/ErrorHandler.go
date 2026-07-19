@@ -104,8 +104,26 @@ func ListErrorGroupsHandler(c fiber.Ctx) error {
 		})
 	}
 
+	page, limit := models.ParsePagination(c.Query("page"), c.Query("limit"))
+	offset := (page - 1) * limit
+
+	query := config.DB.Where("project_id = ?", projectID)
+
+	if status := c.Query("status"); status != "" {
+		query = query.Where("status = ?", status)
+	}
+	if q := c.Query("q"); q != "" {
+		if len(q) > 200 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Search query too long (max 200 characters)"})
+		}
+		query = query.Where("title ILIKE ?", "%"+q+"%")
+	}
+
+	var totalCount int64
+	query.Model(&models.ErrorGroup{}).Count(&totalCount)
+
 	var groups []models.ErrorGroup
-	if err := config.DB.Where("project_id = ?", projectID).Order("last_seen_at DESC").Find(&groups).Error; err != nil {
+	if err := query.Order("last_seen_at DESC").Offset(offset).Limit(limit).Find(&groups).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to fetch error groups",
 		})
@@ -116,8 +134,9 @@ func ListErrorGroupsHandler(c fiber.Ctx) error {
 		responses[i] = g.ToResponse()
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"error_groups": responses,
+	return c.Status(fiber.StatusOK).JSON(models.PaginatedErrorGroups{
+		ErrorGroups: responses,
+		Pagination:  models.NewPagination(page, limit, totalCount),
 	})
 }
 
@@ -151,8 +170,19 @@ func GetErrorGroupHandler(c fiber.Ctx) error {
 		})
 	}
 
+	page, limit := models.ParsePagination(c.Query("page"), c.Query("limit"))
+	offset := (page - 1) * limit
+
+	errQuery := config.DB.Where("error_group_id = ?", errorGroupID)
+	if severity := c.Query("severity"); severity != "" {
+		errQuery = errQuery.Where("severity = ?", severity)
+	}
+
+	var errTotal int64
+	errQuery.Model(&models.Error{}).Count(&errTotal)
+
 	var errors []models.Error
-	if err := config.DB.Where("error_group_id = ?", errorGroupID).Order("occurred_at DESC").Limit(50).Find(&errors).Error; err != nil {
+	if err := errQuery.Order("occurred_at DESC").Offset(offset).Limit(limit).Find(&errors).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to fetch errors",
 		})
@@ -166,6 +196,7 @@ func GetErrorGroupHandler(c fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"error_group": group.ToResponse(),
 		"errors":      errorResponses,
+		"pagination":  models.NewPagination(page, limit, errTotal),
 	})
 }
 
