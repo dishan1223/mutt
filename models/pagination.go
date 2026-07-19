@@ -21,6 +21,9 @@ func ParsePagination(pageStr, limitStr string) (int, int) {
 }
 
 func NewPagination(page, limit int, totalCount int64) Pagination {
+	if limit <= 0 {
+		limit = 20
+	}
 	totalPages := int(totalCount) / limit
 	if int(totalCount)%limit > 0 {
 		totalPages++

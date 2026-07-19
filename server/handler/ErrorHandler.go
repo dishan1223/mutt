@@ -113,6 +113,9 @@ func ListErrorGroupsHandler(c fiber.Ctx) error {
 		query = query.Where("status = ?", status)
 	}
 	if q := c.Query("q"); q != "" {
+		if len(q) > 200 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Search query too long (max 200 characters)"})
+		}
 		query = query.Where("title ILIKE ?", "%"+q+"%")
 	}
 

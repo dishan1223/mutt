@@ -66,6 +66,9 @@ func ListProjectsHandler(c fiber.Ctx) error {
 
 	query := config.DB.Where("user_id = ?", userID)
 	if q := c.Query("q"); q != "" {
+		if len(q) > 100 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Search query too long (max 100 characters)"})
+		}
 		query = query.Where("name ILIKE ?", "%"+q+"%")
 	}
 
